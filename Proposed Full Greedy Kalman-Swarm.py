@@ -1,6 +1,10 @@
 from controller import Supervisor
 import math
+import random
 import numpy as np
+
+# log_file = open("swarm_data.csv", "w")
+# log_file.write("Time,Error\n") # Header for CSV
 
 # --- INITIALIZATION ---
 robot = Supervisor()
@@ -60,6 +64,15 @@ prev_right_enc = 0.0
 
 is_escaping = False
 escape_dir = 1.0
+        
+# wandering logic constants
+MAX_SPEED = 5.0
+OBSTACLE_THRESHOLD = 0.8  # Distance to start avoiding
+CLEARANCE_THRESHOLD = 1.5 # Distance to stop escaping
+NOISE_FACTOR = 0.2        # How much "randomness" to add
+
+#capture the map
+saved = False
 
 # ----------------- MAIN LOOP -----------------
 while robot.step(timestep) != -1:
@@ -71,7 +84,7 @@ while robot.step(timestep) != -1:
     
     # imu_noise: Electrical jitter in orientation.
     imu_noise = 0.02
-    sensor_noise = 0.05
+    sensor_noise = 0.02
     
     # --- STEP 1: READ SENSORS ---
     range_image = lidar.getRangeImage()
@@ -87,30 +100,45 @@ while robot.step(timestep) != -1:
         
     measured_theta = imu.getRollPitchYaw()[2]
     
-    # --- STEP 2: MOVEMENT LOGIC (RECOVERY-BASED) ---
-    speed = 5.0
-    front_slice = range_image[int(num_rays*0.35) : int(num_rays*0.65)]
-    min_dist = min([d for d in front_slice if d > 0.05], default=5.0)
+    # --- STEP 2: MOVEMENT LOGIC ---
+    left_zone = range_image[0 : int(num_rays*0.33)]
+    mid_zone = range_image[int(num_rays*0.33) : int(num_rays*0.66)]
+    right_zone = range_image[int(num_rays*0.66) : num_rays]
+    
+    # Get minimum distances for each zone
+    min_left = min([d for d in left_zone if d > 0.05], default=5.0)
+    min_mid = min([d for d in mid_zone if d > 0.05], default=5.0)
+    min_right = min([d for d in right_zone if d > 0.05], default=5.0)
     
     if is_escaping:
-        l_speed = speed * 0.6 * escape_dir
-        r_speed = -speed * 0.6 * escape_dir
-        if min_dist > 1.2: 
-            is_escaping = False
-    elif min_dist < 0.6:
-        is_escaping = True
-        l_dist = range_image[int(num_rays*0.1)]
-        r_dist = range_image[int(num_rays*0.9)]
-        if l_dist > r_dist:
-            escape_dir = 1.0
-        else:
-            escape_dir = -1.0
-        l_speed = speed * 0.6 * escape_dir
-        r_speed = -speed * 0.6 * escape_dir
-    else:
-        l_speed = speed
-        r_speed = speed
+        # Stay in escape mode until the front is very clear
+        l_speed = MAX_SPEED * 0.5 * escape_dir
+        r_speed = -MAX_SPEED * 0.5 * escape_dir
         
+        # Only stop escaping when the front AND sides have breathing room
+        if min_mid > CLEARANCE_THRESHOLD:
+            is_escaping = False
+    else:
+        if min_mid < OBSTACLE_THRESHOLD:
+            # 2. Obstacle detected! Determine direction based on side clearance
+            is_escaping = True
+            escape_dir = 1.0 if min_left > min_right else -1.0
+            l_speed = 0
+            r_speed = 0
+        else:
+            # Smooth Wandering: Go forward but drift slightly away from closer side
+            # This prevents the robot from getting perfectly parallel to walls
+            steering_bias = (min_left - min_right) * 0.1 
+            
+            jitter = random.uniform(-NOISE_FACTOR, NOISE_FACTOR)
+            
+            l_speed = MAX_SPEED + steering_bias + jitter
+            r_speed = MAX_SPEED - steering_bias - jitter
+    
+    # Final speed clamping
+    l_speed = max(min(l_speed, MAX_SPEED), -MAX_SPEED)
+    r_speed = max(min(r_speed, MAX_SPEED), -MAX_SPEED)
+    
     lw.setVelocity(l_speed)
     rw.setVelocity(r_speed)
 
@@ -124,6 +152,7 @@ while robot.step(timestep) != -1:
     d_center = (d_left + d_right) / 2.0
     d_theta = (d_right - d_left) / WHEEL_BASE
     
+    v_linear = d_center / dt
     v_angular = d_theta / dt
 
     X[0] += d_center * np.cos(X[2]) 
@@ -171,31 +200,70 @@ while robot.step(timestep) != -1:
     robot_y = X[1,0]
     robot_theta = X[2,0]
 
-    # --- STEP 5: MAPPING (STOP WHEN TURNING) ---
-    is_turning = abs(v_angular) > 0.05 
+    # --- STEP 5: MAPPING (WITH PEER FILTERING) ---
+    is_turning = abs(v_angular) > 0.05
     
+    HIT_INC = 10       
+    MAX_CONF = 100     
+    THRESHOLD = 30 
+    
+    # Velocity Check: Only map if moving forward or standing still
     if not is_turning:
         fov = lidar.getFov()
         for i in range(0, num_rays, 2):
             dist = range_image[i]
-            if 0.1 < dist < 5.0: 
+            if 0.2 < dist < 3.5: 
                 alpha = (fov / 2.0) - (i * fov / num_rays)
                 obj_x = robot_x + dist * math.cos(robot_theta + alpha)
                 obj_y = robot_y + dist * math.sin(robot_theta + alpha)
                 
-                # Global Arena is 15x15m
+                # Center offset (adjust 7.5 based on your world size)
                 idx_x = int((obj_x + 7.5) / map_res)
                 idx_y = int((7.5 - obj_y) / map_res)
                 
                 if 0 <= idx_x < map_size and 0 <= idx_y < map_size:
-                    occupancy_grid[idx_y, idx_x] = 255
+                    # Increment confidence
+                    current_val = int(occupancy_grid[idx_y, idx_x])
+                    occupancy_grid[idx_y, idx_x] = min(current_val + HIT_INC, MAX_CONF)
+    
 
     prev_left_enc = c_lw
     prev_right_enc = c_rq
     
     # --- STEP 6: DISPLAY ---
-    map_display = np.dstack([occupancy_grid]*3 + [np.full_like(occupancy_grid, 255)]).astype(np.uint8)
+    display_pixels = np.where(occupancy_grid >= THRESHOLD, 255, 0).astype(np.uint8)
+    
+    # Stack into BGRA (Blue, Green, Red, Alpha)
+    # This creates a grayscale image with a fully opaque alpha channel
+    map_display = np.dstack([display_pixels, display_pixels, display_pixels, np.full_like(display_pixels, 255)])
+    
     ir_map = display.imageNew(map_display.tobytes(), display.BGRA, map_size, map_size)
     if ir_map:
         display.imagePaste(ir_map, 0, 0, False)
         display.imageDelete(ir_map)
+        
+    if not saved and robot.getTime() >= 600:
+        ref = display.imageCopy(0, 0, display.getWidth(), display.getHeight())
+        display.imageSave(ref, "SWARM_map.png")
+        saved = True
+        print("Image saved. Done.")
+
+    # --- QUANTITATIVE DATA COLLECTION ---
+    # current_time = robot.getTime()
+    # if current_time > 600.0:
+        # print("600 seconds reached. Saving and Exiting...")
+        # log_file.close()
+        # Optional: Save the final map automatically
+        # ref = display.imageCopy(0, 0, display.getWidth(), display.getHeight())
+        # display.imageSave(ref, "final_map_result.png")
+        # break 
+
+    # --- 3. LOGGING: Calculate and save error ---
+    # actual_pos = robot_node.getPosition()
+    # gt_x, gt_y = actual_pos[0], actual_pos[1]
+    
+    # Euclidean Error between Kalman State X and Ground Truth
+    # pos_error = math.sqrt((X[0,0] - gt_x)**2 + (X[1,0] - gt_y)**2)
+    
+    # Write to file instead of printing
+    # log_file.write(f"{current_time:.2f},{pos_error:.4f}\n")
