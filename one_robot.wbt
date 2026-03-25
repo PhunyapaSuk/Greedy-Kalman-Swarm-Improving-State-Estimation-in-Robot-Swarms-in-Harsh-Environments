@@ -1,0 +1,287 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/adept/pioneer3/protos/Pioneer3dx.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/devices/hokuyo/protos/HokuyoUrg04lx.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Parquetry.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/BrushedAluminium.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/apartment_structure/protos/Wall.proto"
+
+WorldInfo {
+}
+Viewpoint {
+  orientation -0.46593791682244257 0.3705077046264709 0.8035084930973578 2.0896998275440373
+  position 2.274581817185707 -7.806301140067026 16.603491452401514
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  floorSize 15 15
+  floorAppearance Parquetry {
+    type "dark strip"
+    colorOverride 0 0 0
+  }
+  wallHeight 0.4
+  wallAppearance BrushedAluminium {
+    IBLStrength 10
+  }
+}
+Pioneer3dx {
+  translation -6.11 3.73998 0.1975
+  rotation 0 0 -1 -5.307179586466759e-06
+  name "Pioneer 3-DX(1)"
+  controller "SWARM"
+  supervisor TRUE
+  extensionSlot [
+    SpotLight {
+      attenuation 0 0 1
+      beamWidth 0.785398
+      cutOffAngle 1
+      direction 25 1 -1
+      location 0 0 0.1
+    }
+    InertialUnit {
+      name "imu inertial_unit"
+    }
+    Display {
+      width 750
+      height 750
+    }
+    Camera {
+      translation 0.18 0 0.14
+      width 640
+      height 480
+    }
+    HokuyoUrg04lx {
+      translation 0 0 0.16
+      name "laser"
+      noise 0.02
+    }
+  ]
+}
+DEF wall Group {
+  children [
+    Wall {
+      translation -3.5 2.57002 0
+      rotation 0 0 1 1.5708
+      name "wall(14)"
+      size 1.5 0.01 0.4
+    }
+    Wall {
+      translation 2.1871 0.95552 0
+      rotation 0 0 1 2.618
+      name "wall(2)"
+      size 1.5 0.01 0.4
+    }
+    Wall {
+      translation -6.50622 -2.18622 0
+      rotation 0 0 1 2.85387e-06
+      name "wall(24)"
+      size 2 0.01 0.4
+    }
+    Wall {
+      translation 2.83 -0.41999 0
+      rotation 0 0 1 1.5708
+      name "wall(22)"
+      size 2 0.01 0.4
+    }
+    Wall {
+      translation -3.74 -6.50996 0
+      rotation 0 0 1 1.5708
+      name "wall(21)"
+      size 2 0.01 0.4
+    }
+    Wall {
+      translation 4.06899 -6.63931 0
+      rotation 0 0 -1 -2.094405307179586
+      name "wall(20)"
+      size 2 0.01 0.4
+    }
+    Wall {
+      translation 2.57 -5.77999 0
+      rotation 0 0 -1 -5.307179586466759e-06
+      name "wall(19)"
+      size 2 0.01 0.4
+    }
+    Wall {
+      translation 2.18139 -1.78437 0
+      rotation 0 0 -1 2.61799
+      name "wall(17)"
+      size 1.5 0.01 0.4
+    }
+    Wall {
+      translation 6.44399 6.4262 0
+      rotation 0 0 -1 -2.3562053071795863
+      name "wall(15)"
+      size 3 0.01 0.4
+    }
+    Wall {
+      translation -0.605983 4.793 0
+      rotation 0 0 -1 2.35619
+      name "wall(12)"
+      size 2 0.01 0.4
+    }
+    Wall {
+      translation -4.71 1.32002 0
+      rotation 0 0 1 1.5708
+      name "wall(11)"
+      size 1 0.01 0.4
+    }
+    Wall {
+      translation -1.94 -1.62996 0
+      rotation 0 0 1 1.5708
+      name "wall(10)"
+      size 3 0.01 0.4
+    }
+    Wall {
+      translation -1.64622 -3.12622 0
+      rotation 0 0 1 2.85387e-06
+      name "wall(9)"
+      size 2 0.01 0.4
+    }
+    Wall {
+      translation 0.1 6.50001 0
+      rotation 0 0 1 1.5708
+      name "wall(8)"
+      size 2 0.01 0.4
+    }
+    Wall {
+      translation 3.83145 0.58654 0
+      rotation 0 0 -1 3.67802e-06
+      name "wall(7)"
+      size 2 0.01 0.4
+    }
+    Wall {
+      translation -4.0874 -5.15934 0
+      rotation 0 0 1 2.3562
+      name "wall(5)"
+      size 1 0.01 0.4
+    }
+    Wall {
+      translation 2.0678 3.8486 0
+      rotation 0 0 1 0.785403
+      name "wall(4)"
+      size 1.5 0.01 0.4
+    }
+    Wall {
+      translation -6.50001 5.01001 0
+      rotation 0 0 1 -3.1415853071795863
+      name "wall(3)"
+      size 2 0.01 0.4
+    }
+    Wall {
+      translation -4.49 1.82001 0
+      rotation 0 0 -1 -5.307179586466759e-06
+      name "wall(1)"
+      size 2 0.01 0.4
+    }
+    Wall {
+      translation 1.54 2.32001 0
+      rotation 0 0 1 1.5708
+      size 2 0.01 0.4
+    }
+  ]
+}
+DEF object Group {
+  children [
+    Solid {
+      translation -5.79 -6.45 0.15
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 1 0 0
+            roughness 1
+            metalness 0
+          }
+          geometry Box {
+            size 0.3 0.3 0.3
+          }
+        }
+      ]
+      name "solid(3)"
+    }
+    Solid {
+      translation 5.07 -3.08 0.15
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 1 0 0
+            roughness 1
+            metalness 0
+          }
+          geometry Box {
+            size 0.3 0.3 0.3
+          }
+        }
+      ]
+      name "solid(1)"
+    }
+    Solid {
+      translation -1.14 1.63 0.15
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 1 0 0
+            roughness 1
+            metalness 0
+          }
+          geometry Box {
+            size 0.3 0.3 0.3
+          }
+        }
+      ]
+      name "solid(4)"
+    }
+    Solid {
+      translation -6.75 6.22 0.15
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 1 0 0
+            roughness 1
+            metalness 0
+          }
+          geometry Box {
+            size 0.3 0.3 0.3
+          }
+        }
+      ]
+      name "solid(2)"
+    }
+  ]
+}
+Pioneer3dx {
+  rotation 0 0 1 1.5708
+  controller "SWARM"
+  supervisor TRUE
+  extensionSlot [
+    SpotLight {
+      attenuation 0 0 1
+      beamWidth 0.785398
+      cutOffAngle 1
+      direction 25 1 -1
+      location 0 0 0.1
+    }
+    InertialUnit {
+      name "imu inertial_unit"
+    }
+    Display {
+      width 750
+      height 750
+    }
+    Camera {
+      translation 0.18 0 0.14
+      width 640
+      height 480
+    }
+    HokuyoUrg04lx {
+      translation 0 0 0.16
+      name "laser"
+      noise 0.02
+    }
+  ]
+}
